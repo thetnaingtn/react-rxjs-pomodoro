@@ -2,7 +2,23 @@ import React from "react";
 import "./App.css";
 
 function App() {
-  return null;
+  return (
+    <div className="app">
+      <h2>Pomodoro!</h2>
+
+      <div className="timer">
+        <span>00</span>
+        <span>:</span>
+        <span>00</span>
+      </div>
+
+      <div className="buttons">
+        <button>Start</button>
+        <button>Stop</button>
+        <button>Reset</button>
+      </div>
+    </div>
+  );
 }
 
 export default App;
