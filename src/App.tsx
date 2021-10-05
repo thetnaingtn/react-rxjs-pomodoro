@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Subscription } from "rxjs";
 import { interval } from "rxjs";
 import { scan, share, startWith } from "rxjs/operators";
 
@@ -6,14 +7,14 @@ import "./App.css";
 
 const TIME_LEFT = 25 * 60;
 
-const countdown$ = interval(1000).pipe(
-  startWith(TIME_LEFT),
-  scan((time) => {
-    if (time >= 1) return time - 1;
-    return 0;
-  }),
-  share()
-);
+// const countdown$ = interval(1000).pipe(
+//   startWith(TIME_LEFT),
+//   scan((time) => {
+//     if (time >= 1) return time - 1;
+//     return 0;
+//   }),
+//   share()
+// );
 
 function padTime(time: number) {
   return time.toString().padStart(2, "0");
@@ -21,10 +22,29 @@ function padTime(time: number) {
 
 function App() {
   const [timeLeft, setTimeLeft] = useState(TIME_LEFT);
-  useEffect(() => {
-    const subscription = countdown$.subscribe((val) => setTimeLeft(val));
-    return () => subscription.unsubscribe();
-  }, []);
+  const [isRunning, setIsRunning] = useState(false);
+  const subscriptionRef = useRef<Subscription | null>(null);
+
+  const countdown$ = interval(1000).pipe(
+    startWith(timeLeft),
+    scan((time) => {
+      if (time >= 1) return time - 1;
+      return 0;
+    }),
+    share()
+  );
+
+  function startCountdown() {
+    setIsRunning(true);
+    subscriptionRef.current = countdown$.subscribe((val) => setTimeLeft(val));
+  }
+
+  function stopCountdown() {
+    if (!subscriptionRef.current) return;
+    setIsRunning(false);
+    subscriptionRef.current.unsubscribe();
+  }
+
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft - minutes * 60;
   return (
@@ -38,8 +58,11 @@ function App() {
       </div>
 
       <div className="buttons">
-        <button>Start</button>
-        <button>Stop</button>
+        {!isRunning ? (
+          <button onClick={startCountdown}>Start</button>
+        ) : (
+          <button onClick={stopCountdown}>Stop</button>
+        )}
         <button>Reset</button>
       </div>
     </div>
