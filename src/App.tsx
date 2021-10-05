@@ -1,41 +1,32 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Subscription } from "rxjs";
 import { interval } from "rxjs";
-import { scan, share, startWith } from "rxjs/operators";
+import { scan, share, startWith, takeWhile } from "rxjs/operators";
 
 import "./App.css";
 
 const TIME_LEFT = 25 * 60;
-
-// const countdown$ = interval(1000).pipe(
-//   startWith(TIME_LEFT),
-//   scan((time) => {
-//     if (time >= 1) return time - 1;
-//     return 0;
-//   }),
-//   share()
-// );
 
 function padTime(time: number) {
   return time.toString().padStart(2, "0");
 }
 
 function App() {
+  const [title, setTitle] = useState("Let the countdown begin!");
   const [timeLeft, setTimeLeft] = useState(TIME_LEFT);
   const [isRunning, setIsRunning] = useState(false);
   const subscriptionRef = useRef<Subscription | null>(null);
 
   const countdown$ = interval(1000).pipe(
     startWith(timeLeft),
-    scan((time) => {
-      if (time >= 1) return time - 1;
-      return 0;
-    }),
+    scan((time) => time - 1),
+    takeWhile((time) => time >= 0),
     share()
   );
 
   function startCountdown() {
     setIsRunning(true);
+    setTitle("You're doing great");
     subscriptionRef.current = countdown$.subscribe((val) => setTimeLeft(val));
   }
 
@@ -45,11 +36,19 @@ function App() {
     subscriptionRef.current.unsubscribe();
   }
 
+  function resetCountdown() {
+    if (!subscriptionRef.current) return;
+    setTimeLeft(TIME_LEFT);
+    setIsRunning(false);
+    setTitle("Ready for the another round!");
+    subscriptionRef.current.unsubscribe();
+  }
+
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft - minutes * 60;
   return (
     <div className="app">
-      <h2>Pomodoro!</h2>
+      <h2>{title}</h2>
 
       <div className="timer">
         <span>{padTime(minutes)}</span>
@@ -63,7 +62,7 @@ function App() {
         ) : (
           <button onClick={stopCountdown}>Stop</button>
         )}
-        <button>Reset</button>
+        <button onClick={resetCountdown}>Reset</button>
       </div>
     </div>
   );
