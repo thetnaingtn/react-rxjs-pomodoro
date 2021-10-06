@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Subscription } from "rxjs";
 import { interval } from "rxjs";
 import { scan, share, startWith, takeWhile } from "rxjs/operators";
@@ -23,6 +23,12 @@ function App() {
     takeWhile((time) => time >= 0),
     share()
   );
+
+  useEffect(() => {
+    return () => {
+      if (subscriptionRef.current) subscriptionRef.current.unsubscribe();
+    };
+  }, []);
 
   function startCountdown() {
     setIsRunning(true);
