@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
-import { Subscription } from "rxjs";
+import { fromEvent, Subscription } from "rxjs";
 import { interval } from "rxjs";
-import { scan, share, startWith, takeWhile } from "rxjs/operators";
+import { scan, share, startWith, takeWhile, takeUntil } from "rxjs/operators";
 
 import "./App.css";
 
@@ -10,6 +10,11 @@ const TIME_LEFT = 25 * 60;
 function padTime(time: number) {
   return time.toString().padStart(2, "0");
 }
+
+const stop$ = fromEvent(
+  document.getElementById("stop") as HTMLButtonElement,
+  "click"
+);
 
 function App() {
   const [title, setTitle] = useState("Let the countdown begin!");
@@ -21,6 +26,7 @@ function App() {
     startWith(timeLeft),
     scan((time) => time - 1),
     takeWhile((time) => time >= 0),
+    takeUntil(stop$),
     share()
   );
 
@@ -63,11 +69,13 @@ function App() {
       </div>
 
       <div className="buttons">
-        {!isRunning ? (
-          <button onClick={startCountdown}>Start</button>
-        ) : (
-          <button onClick={stopCountdown}>Stop</button>
-        )}
+        {/* {!isRunning ? ( */}
+        <button onClick={startCountdown}>Start</button>
+        {/* ) : ( */}
+        <button id="stop" onClick={stopCountdown}>
+          Stop
+        </button>
+        {/* )} */}
         <button onClick={resetCountdown}>Reset</button>
       </div>
     </div>
